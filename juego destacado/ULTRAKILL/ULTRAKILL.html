@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ULTRAKILL - Juego Linux</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f0f0f; --text: #ffffff; --card-bg: #1c1c1c;
+            --hover-bg: #292929; --header-bg: #1a1a1a; --nav-bg: #1b1b1b;
+            --search-bg: #1f1f1f; --search-focus-bg: #ffffff; --accent: #0088ff;
+            --accent-glow: rgba(0, 136, 255, 0.5);
+            --button-border: rgba(255, 255, 255, 0.1); --green: #00c853; --green-hover: #00a843;
+            --red: #f44336; --red-hover: #d32f2f; --orange: #ff9800; --orange-hover: #f57c00;
+            --purple: #9c27b0; --purple-hover: #7b1fa2;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Ubuntu', sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        .animate-on-load {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        .animate-on-load.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .logo-float {
+            position: absolute;
+            display: block;
+            opacity: 0;
+            filter: opacity(0.7);
+            animation: fade-in-animation 2s ease-out forwards, float-animation 25s linear infinite;
+        }
+        @keyframes float-animation {  
+            0%{transform: translateY(100vh) rotate(0deg);}  
+            100%{transform: translateY(-120vh) rotate(360deg);}  
+        }
+        @keyframes fade-in-animation { to { opacity: 0.7; } }
+        
+        .logo-float:nth-child(1) { top: 80%; left: 10%; width: 80px; animation-duration: 2s, 22s; animation-delay: 0s; }
+        .logo-float:nth-child(2) { top: 90%; left: 25%; width: 50px; animation-duration: 2s, 30s; animation-delay: 1s; }
+        .logo-float:nth-child(3) { top: 70%; left: 40%; width: 60px; animation-duration: 2s, 18s; animation-delay: 3s; }
+        .logo-float:nth-child(4) { top: 85%; left: 55%; width: 90px; animation-duration: 2s, 13s; animation-delay: 0.5s; }
+        .logo-float:nth-child(5) { top: 75%; left: 70%; width: 70px; animation-duration: 2s, 25s; animation-delay: 2s; }
+        .logo-float:nth-child(6) { top: 95%; left: 80%; width: 85px; animation-duration: 2s, 20s; animation-delay: 4s; }
+        .logo-float:nth-child(7) { top: 65%; left: 5%; width: 55px; animation-duration: 2s, 28s; animation-delay: 5s; }
+        .logo-float:nth-child(8) { top: 80%; left: 90%; width: 75px; animation-duration: 2s, 15s; animation-delay: 1.5s; }
+        
+        .site-content {
+            position: relative;
+            z-index: 1;
+            background-color: transparent;
+        }
+        
+        header {
+            background: rgba(26, 26, 26, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px; 
+            display: flex;
+            justify-content: space-between; 
+            align-items: center; 
+            position: sticky;
+            top: 0; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5); 
+            z-index: 2000;
+        }
+        
+        .logo { font-size: 1.5em; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .logo img { height: 40px; }
+        
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 10px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            border: 1px solid var(--button-border);
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+        .back-btn:hover { background: var(--hover-bg); transform: scale(1.05); border-color: var(--accent); }
+        
+        .game-header {
+            padding: 40px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(8, 136, 255, 0.1) 0%, rgba(0, 200, 83, 0.05) 100%);
+            border-bottom: 1px solid var(--button-border);
+        }
+        
+        .game-title {
+            font-size: 3em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--accent), var(--green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .game-subtitle { font-size: 1.2em; color: #bbb; margin-bottom: 20px; }
+        
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+        
+        .game-info { display: flex; flex-direction: column; gap: 30px; }
+        
+        .screenshot-gallery {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid var(--button-border);
+        }
+        
+        .gallery-title { font-size: 1.3em; margin-bottom: 15px; color: var(--text); }
+        
+        .main-screenshot {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .main-screenshot.fade-out { opacity: 0; }
+        
+        .thumbnail-row {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 5px 0;
+            justify-content: center;
+        }
+        
+        .thumbnail {
+            width: 80px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        .thumbnail:hover, .thumbnail.active { opacity: 1; transform: scale(1.1); border: 2px solid var(--accent); }
+
+        .thumbnail-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--hover-bg);
+            border: 1px solid var(--button-border);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .indicator:hover {
+            background-color: #555;
+        }
+        .indicator.active {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+        
+        .game-description { background: var(--card-bg); border-radius: 15px; padding: 25px; border: 1px solid var(--button-border); }
+        .description-title { font-size: 1.3em; margin-bottom: 15px; color: var(--text); }
+        .description-text { line-height: 1.7; color: #ccc; margin-bottom: 20px; }
+        .features-list { list-style: none; padding: 0; }
+        .features-list li { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; padding-left: 25px; }
+        .features-list li:before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: bold; }
+        
+        .instructions-section { background: var(--card-bg); border-radius: 15px; padding: 25px; border: 1px solid var(--button-border); }
+        .instructions-title { font-size: 1.3em; margin-bottom: 15px; color: var(--green); }
+        .step-list { list-style: none; padding: 0; margin-bottom: 20px; counter-reset: step-counter; }
+        .step-list li { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; padding-left: 30px; }
+        .step-list li:before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute; left: 0; top: 10px; background: var(--green); color: white;
+            width: 20px; height: 20px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 0.8em; font-weight: bold;
+        }
+        
+        .code-container { position: relative; margin: 8px 0; }
+        .code-block { 
+            background: #1a1a1a; 
+            border: 1px solid var(--button-border); 
+            border-radius: 8px; 
+            padding: 12px 50px 12px 12px; 
+            font-family: 'Courier New', monospace; 
+            color: var(--green); 
+            overflow-x: auto; 
+            min-height: 48px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .code-block:hover, .code-container:focus-within .code-block {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        .copy-btn {
+            position: absolute; top: 50%; transform: translateY(-50%); right: 8px; background: var(--hover-bg); border: 1px solid var(--button-border);
+            color: var(--text); border-radius: 5px; padding: 6px 8px; cursor: pointer; display: flex; align-items: center;
+            gap: 6px; font-size: 0.8em; transition: all 0.3s ease;
+        }
+        .copy-btn:hover { background: var(--bg); border-color: var(--accent); }
+        .copy-btn.copied { background: var(--green); color: #ffffff; border-color: var(--green-hover); }
+        .copy-btn svg { width: 16px; height: 16px; stroke: currentColor; }
+
+        .download-panel {
+            background: var(--card-bg);
+            border-radius: 15px;
+            border: 1px solid var(--button-border);
+            position: sticky;
+            top: 85px;
+            height: fit-content;
+            padding: 18px;
+        }
+        .panel-title { font-size: 1.25em; margin-bottom: 16px; color: var(--text); text-align: center; }
+        .game-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+        .stat-item { background: var(--hover-bg); padding: 11px; border-radius: 10px; text-align: center; border: 1px solid var(--button-border); }
+        .stat-label { font-size: 0.85em; color: #888; margin-bottom: 5px; }
+        .stat-value { font-size: 1.05em; font-weight: bold; color: var(--text); }
+        .requirements { margin-bottom: 18px; }
+        .req-title { font-size: 1.05em; margin-bottom: 12px; color: var(--orange); }
+        .req-list { list-style: none; padding: 0; }
+        .req-list li { padding: 4px 0; font-size: 0.87em; color: #bbb; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .download-buttons { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        .btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px;
+            border-radius: 10px; text-decoration: none; font-weight: bold; transition: all 0.3s ease;
+            border: 1px solid transparent; width: 100%; font-size: 1.05em;
+            cursor: pointer;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--green), #00e676); color: white; box-shadow: 0 4px 15px rgba(0, 200, 83, 0.3); }
+        .btn-primary:hover { background: linear-gradient(135deg, var(--green-hover), #00c853); transform: scale(1.05); box-shadow: 0 6px 20px rgba(0, 200, 83, 0.4); }
+        
+        .btn-torrent { 
+            background: linear-gradient(135deg, var(--purple), #ba68c8); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3); 
+        }
+        .btn-torrent:hover { 
+            background: linear-gradient(135deg, var(--purple-hover), #9c27b0); 
+            transform: scale(1.05); 
+            box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4); 
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, #0077e6, var(--accent));
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 136, 255, 0.3);
+        }
+        .btn-accent:hover {
+            background: linear-gradient(135deg, #0066cc, #0077e6);
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 136, 255, 0.4);
+        }
+        
+        .mediafire-download-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 10px;
+        }
+        
+        .mediafire-logo { width: 110px; height: auto; opacity: 0.8; transition: opacity 0.3s ease; }
+        .mediafire-logo:hover { opacity: 1; }
+        
+        .warning-box { background: linear-gradient(135deg, rgba(255, 152, 0, 0.1), rgba(244, 67, 54, 0.05)); border: 1px solid var(--orange); border-radius: 10px; padding: 13px; margin-top: 16px; }
+        .warning-title { color: var(--orange); font-weight: bold; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-size: 0.9em; }
+        .warning-text { font-size: 0.87em; color: #ccc; line-height: 1.5; }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(77, 166, 255, 0.1), rgba(0, 136, 255, 0.05));
+            border: 1px solid #4DA6FF;
+            border-radius: 10px;
+            padding: 13px;
+            margin-top: 16px;
+        }
+        .info-title {
+            color: #4DA6FF;
+            font-weight: bold;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+        .info-text {
+            font-size: 0.87em;
+            color: #ccc;
+            line-height: 1.5;
+        }
+
+        .distro-selector-container {
+            position: relative;
+            margin-top: 15px; 
+            width: 100%;
+        }
+
+        .distro-selector-container:not(:last-of-type) {
+             margin-bottom: 16px;
+        }
+
+        .distro-selector-container .btn {
+            justify-content: space-between;
+        }
+        
+        .distro-selector-container .btn svg {
+            width: 20px;
+            height: 20px;
+            transition: transform 0.3s ease;
+        }
+        .distro-selector-container .btn.open svg {
+            transform: rotate(180deg);
+        }
+
+        .distro-dropdown {
+            position: absolute;
+            width: 100%;
+            background-color: var(--card-bg);
+            border: 1px solid var(--button-border);
+            border-radius: 10px;
+            top: calc(100% + 5px);
+            z-index: 100;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            box-shadow: 
+                inset 0 8px 6px -6px rgba(0,0,0,0.5), 
+                inset 0 -8px 6px -6px rgba(0,0,0,0.5), 
+                0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .distro-dropdown.drop-up {
+            top: auto;
+            bottom: calc(100% + 5px);
+            transform: translateY(10px);
+        }
+
+        .distro-dropdown.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .distro-item {
+            display: block;
+            padding: 10px 12px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--text);
+            background-color: var(--hover-bg);
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            cursor: pointer;
+        }
+        .distro-item:last-child {
+            margin-bottom: 0;
+        }
+        .distro-item:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+        
+        .other-header {
+            cursor: default;
+            font-size: 0.9em;
+            color: #888;
+            margin-top: 15px;
+            padding: 0 0 8px 0;
+            border-bottom: 1px solid var(--button-border);
+            margin-bottom: 8px;
+            font-weight: normal;
+        }
+
+        .other-distro-item {
+            position: relative;
+            padding-left: 25px;
+        }
+        .other-distro-item::before {
+            content: '└';
+            position: absolute;
+            left: 12px;
+            color: #888;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content { grid-template-columns: 1fr; gap: 20px; padding: 20px 15px; }
+            .game-title { font-size: 2em; }
+            .download-panel { position: static; order: -1; }
+            .game-stats { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="background-animation">
+    <img src="https://i.imgur.com/uNZjixF.png" alt="Zorin OS Logo" class="logo-float">
+    <img src="https://i.imgur.com/BOmNzCz.png" alt="Ubuntu Logo" class="logo-float">
+    <img src="https://i.imgur.com/r5FwRvw.png" alt="Arch Linux Logo" class="logo-float">
+    <img src="https://i.imgur.com/KWbWAcY.png" alt="Fedora Logo" class="logo-float">
+    <img src="https://i.imgur.com/eQgWVjy.png" alt="Linux Mint Logo" class="logo-float">
+    <img src="https://i.imgur.com/ao5HI4i.png" alt="Gentoo Logo" class="logo-float">
+    <img src="https://i.imgur.com/5oKibO8.png" alt="Debian Logo" class="logo-float">
+    <img src="https://i.imgur.com/NwT9EPu.png" alt="Tux" class="logo-float">
+</div>
+
+<div class="site-content">
+    <header>
+        <div class="logo animate-on-load">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg" alt="Tux Logo">
+            Juego Linux
+        </div>
+        <a href="../../index.html" class="back-btn animate-on-load" id="backToHomeBtn">
+            ← Volver al inicio
+        </a>
+    </header>
+
+    <section class="game-header">
+        <h1 class="game-title">ULTRAKILL</h1>
+        <p class="game-subtitle animate-on-load">Shooter en primera persona ultrarrápido inspirado en Quake y Devil May Cry</p>
+    </section>
+
+    <div class="main-content">
+        <div class="game-info">
+            <div class="screenshot-gallery animate-on-load">
+                <h3 class="gallery-title">🖼️ Capturas del Juego</h3>
+                <img src="https://i.imgur.com/pz68LEi.jpeg" alt="ULTRAKILL Screenshot 1" class="main-screenshot" id="mainScreenshot">
+                <div class="thumbnail-row">
+                    <img src="https://i.imgur.com/pz68LEi.jpeg" alt="Screenshot 1" class="thumbnail active">
+                    <img src="https://i.imgur.com/aI815kD.jpeg" alt="Screenshot 2" class="thumbnail">
+                    <img src="https://i.imgur.com/TDkCVZN.jpeg" alt="Screenshot 3" class="thumbnail">
+                    <img src="https://i.imgur.com/pz68LEi.jpeg" alt="Screenshot 4" class="thumbnail">
+                </div>
+                <div class="thumbnail-indicators"></div>
+            </div>
+
+            <div class="game-description animate-on-load">
+                <h3 class="description-title">📝 Descripción</h3>
+                <p class="description-text">
+                    ULTRAKILL es un shooter en primera persona ultrarrápido donde tu sangre es combustible. 
+                    En este retro FPS inspirado en Quake, Doom y Devil May Cry, juegas como V1, una máquina 
+                    de guerra sedienta de sangre en el infierno de Dante.
+                </p>
+                <p class="description-text">
+                    El juego recompensa el gameplay agresivo: cuanto más brutal y estiloso seas, más salud 
+                    recuperas. Cada nivel es un ballet sangriento de movimiento fluido, armas devastadoras 
+                    y combos espectaculares.
+                </p>
+                
+                <h4 style="color: var(--green); margin: 20px 0 10px 0;">✨ Características Principales:</h4>
+                <ul class="features-list">
+                    <li>Sistema único donde la sangre es tu salud y combustible</li>
+                    <li>Movimiento ultrarrápido con deslizamientos y saltos murales</li>
+                    <li>Sistema de ranking de estilo que recompensa la creatividad</li>
+                    <li>Armas personalizables con variantes únicas</li>
+                    <li>Estética retro inspirada en los 90s con gráficos PSX</li>
+                    <li>Banda sonora electrónica brutal e intensa</li>
+                    <li>Niveles diseñados para speedruns y rejugabilidad</li>
+                    <li>Boss fights épicos e innovadores</li>
+                </ul>
+            </div>
+
+            <div class="instructions-section animate-on-load">
+                <h3 class="instructions-title">📥 Instrucciones de Instalación</h3>
+                <ul class="step-list">
+                    <li>
+                        Ve a la carpeta donde descargaste el archivo:
+                        <div class="code-container">
+                            <div class="code-block">cd ~/Descargas</div>
+                            <button class="copy-btn" title="Copiar comando"></button>
+                        </div>
+                    </li>
+                    <li>
+                        Dale permisos de ejecución al archivo:
+                        <div class="code-container">
+                            <div class="code-block">chmod +x ultrakill_patch_16d.run</div>
+                            <button class="copy-btn" title="Copiar comando"></button>
+                        </div>
+                    </li>
+                    <li>
+                        Ejecuta el instalador:
+                        <div class="code-container">
+                            <div class="code-block">./ultrakill_patch_16d.run</div>
+                            <button class="copy-btn" title="Copiar comando"></button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="download-panel animate-on-load">
+            <h3 class="panel-title">💾 Descargar Juego</h3>
+            
+            <div class="game-stats">
+                <div class="stat-item"><div class="stat-label">Tamaño</div><div class="stat-value">1.87 GB</div></div>
+                <div class="stat-item"><div class="stat-label">Versión</div><div class="stat-value">Patch 16d</div></div>
+                <div class="stat-item"><div class="stat-label">Formato</div><div class="stat-value">.run</div></div>
+                <div class="stat-item"><div class="stat-label">Idioma</div><div class="stat-value">Inglés</div></div>
+            </div>
+
+            <div class="requirements">
+                <h4 class="req-title">⚙️ Requisitos Mínimos del Sistema</h4>
+                <ul class="req-list">
+                    <li><strong>Procesador:</strong> 2.4 GHz Dual Core o superior</li>
+                    <li><strong>Memoria RAM:</strong> 2 GB</li>
+                    <li><strong>Tarjeta gráfica:</strong> GeForce GTX 560 o equivalente</li>
+                    <li><strong>Espacio en disco:</strong> 2 GB libres</li>
+                    <li><strong>Sistema operativo:</strong> Linux de 64 bits</li>
+                    <li><strong>Dependencias:</strong> Vulkan, SDL2, OpenAL, PipeWire o PulseAudio (requiere soporte gráfico moderno)</li>
+                </ul>
+            </div>
+
+            <div class="download-buttons">
+                <div class="mediafire-download-wrapper">
+                    <img src="https://static.mediafire.com/images/backgrounds/header/mf_logo_full_color.svg" alt="Mediafire Logo" class="mediafire-logo">
+                    <a href="https://www.mediafire.com/file/8auywpdg5fubs2p/ultrakill_patch_16d.run/file" target="_blank" class="btn btn-primary">
+                        ⬇️ Descargar Directo
+                    </a>
+                </div>
+            </div>
+
+            <div class="distro-selector-container">
+                <button class="btn btn-accent" id="distroSelectorBtn">
+                    <span id="distroSelectorBtnText">Selecciona tu base de Linux</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="distro-dropdown" id="distroDropdown">
+                    <a href="#" class="distro-item" data-distro="Debian/Ubuntu (APT)">Debian/Ubuntu (APT)</a>
+                    <a href="#" class="distro-item" data-distro="Red Hat/Fedora (RPM)">Red Hat/Fedora (RPM)</a>
+                    <a href="#" class="distro-item" data-distro="Arch Linux (Pacman)">Arch Linux (Pacman)</a>
+                    <a href="#" class="distro-item" data-distro="OpenSUSE (Zypper)">OpenSUSE (Zypper)</a>
+                    
+                    <div class="other-header">Otros (Gestores únicos)</div>
+                    <a href="#" class="distro-item other-distro-item" data-distro="Gentoo (Portage)">Gentoo (Portage)</a>
+                    <a href="#" class="distro-item other-distro-item" data-distro="NixOS (Nix)">NixOS (Nix)</a>
+                    <a href="#" class="distro-item other-distro-item" data-distro="Void Linux (XBPS)">Void Linux (XBPS)</a>
+                    <a href="#" class="distro-item other-distro-item" data-distro="Solus (eopkg)">Solus (eopkg)</a>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <div class="warning-title" id="warningTitle">⚠️ Librerías Requeridas</div>
+                <div class="warning-text">
+                    <p id="warningInstructions">Para ver los comandos, selecciona primero la base de tu sistema operativo en el menú de arriba.</p>
+                    <div class="code-container">
+                        <div class="code-block" id="libsCodeBlock"></div>
+                        <button class="copy-btn" title="Copiar comando"></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <div class="info-title">💡 Opcional: Acelera tus Descargas</div>
+                <p class="info-text">
+                    Para descargar archivos grandes más rápido, puedes usar la combinación de <strong>uGet</strong> y <strong>Aria2</strong>. uGet es un gestor de descargas visual y Aria2 es el potente motor que acelera todo. También puedes usar este método como alternativa al torrent para evitar errores de descarga.
+                </p>
+            </div>
+
+            <div class="distro-selector-container">
+                <button class="btn btn-accent" id="ugetSelectorBtn" style="background-color: #4DA6FF;">
+                    <span id="ugetSelectorBtnText">Instalar uGet + Aria2</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="distro-dropdown" id="ugetDropdown">
+                    <a href="#" class="distro-item" data-distro="Debian/Ubuntu (APT)">Debian/Ubuntu (APT)</a>
+                    <a href="#" class="distro-item" data-distro="Red Hat/Fedora (RPM)">Red Hat/Fedora (RPM)</a>
+                    <a href="#" class="distro-item" data-distro="Arch Linux (Pacman)">Arch Linux (Pacman)</a>
+                    <a href="#" class="distro-item" data-distro="OpenSUSE (Zypper)">OpenSUSE (Zypper)</a>
+                    <div class="other-header">Otros (Gestores únicos)</div>
+                    <a href="#" class="distro-item other-distro-item" data-distro="Gentoo (Portage)">Gentoo (Portage)</a>
+                    <a href="#" class="distro-item other-distro-item" data-distro="NixOS (Nix)">NixOS (Nix)</a>
+                    <a href="#" class="distro-item other-distro-item" data-distro="Void Linux (XBPS)">Void Linux (XBPS)</a>
+                    <a href="#" class="distro-item other-distro-item" data-distro="Solus (eopkg)">Solus (eopkg)</a>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <div class="warning-title" id="ugetWarningTitle">Instrucciones de uGet + Aria2</div>
+                <div class="warning-text">
+                    <p id="ugetWarningInstructions">Para ver el comando de instalación, selecciona primero la base de tu sistema operativo en el menú de arriba.</p>
+                    <div class="code-container">
+                        <div class="code-block" id="ugetCodeBlock"></div>
+                        <button class="copy-btn" title="Copiar comando"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- LÓGICA DE ANIMACIÓN DE ENTRADA ---
+        const elementsToAnimate = document.querySelectorAll('.animate-on-load');
+        elementsToAnimate.forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('is-visible');
+            }, index * 100);
+        });
+
+        // --- LÓGICA DE LA GALERÍA DE CAPTURAS CON INDICADORES ---
+        const mainScreenshot = document.getElementById('mainScreenshot');
+        const thumbnails = document.querySelectorAll('.thumbnail');
+        const indicatorsContainer = document.querySelector('.thumbnail-indicators');
+        let slideshowInterval;
+        let currentIndex = 0;
+
+        if (mainScreenshot && thumbnails.length > 0) {
+            thumbnails.forEach(() => {
+                const indicator = document.createElement('span');
+                indicator.classList.add('indicator');
+                indicatorsContainer.appendChild(indicator);
+            });
+            
+            const indicators = indicatorsContainer.querySelectorAll('.indicator');
+
+            function updateGallery(index, isManual = false) {
+                if (isManual) {
+                    clearInterval(slideshowInterval);
+                    startSlideshow();
+                }
+                mainScreenshot.classList.add('fade-out');
+                setTimeout(() => {
+                    mainScreenshot.src = thumbnails[index].src;
+                    mainScreenshot.alt = thumbnails[index].alt;
+                    currentIndex = index;
+
+                    thumbnails.forEach(thumb => thumb.classList.remove('active'));
+                    thumbnails[index].classList.add('active');
+
+                    indicators.forEach(ind => ind.classList.remove('active'));
+                    indicators[index].classList.add('active');
+
+                    mainScreenshot.classList.remove('fade-out');
+                }, 500);
+            }
+
+            function startSlideshow() {
+                clearInterval(slideshowInterval);
+                slideshowInterval = setInterval(() => {
+                    const nextIndex = (currentIndex + 1) % thumbnails.length;
+                    updateGallery(nextIndex);
+                }, 7000);
+            }
+
+            thumbnails.forEach((thumbnail, index) => {
+                thumbnail.addEventListener('click', () => updateGallery(index, true));
+            });
+
+            indicators.forEach((indicator, index) => {
+                indicator.addEventListener('click', () => updateGallery(index, true));
+            });
+            
+            if (indicators.length > 0) {
+                indicators[0].classList.add('active');
+            }
+            startSlideshow();
+        }
+
+        // --- LÓGICA DE BOTONES PARA COPIAR CÓDIGO ---
+        const allCopyButtons = document.querySelectorAll('.copy-btn');
+        const copyIconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+        const copiedIconSvg = `Copiado! <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+        allCopyButtons.forEach(btn => {
+            btn.innerHTML = copyIconSvg;
+            btn.addEventListener('click', function() {
+                const codeBlock = this.previousElementSibling;
+                if (!codeBlock.innerText.trim()) return;
+                
+                navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+                    btn.classList.add('copied');
+                    btn.innerHTML = copiedIconSvg;
+                    setTimeout(() => {
+                        btn.classList.remove('copied');
+                        btn.innerHTML = copyIconSvg;
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Error al copiar el texto: ', err);
+                });
+            });
+        });
+
+        // --- LÓGICA DEL SELECTOR DE DISTRIBUCIÓN (LIBRERÍAS) ---
+        const distroSelectorBtn = document.getElementById('distroSelectorBtn');
+        const distroDropdown = document.getElementById('distroDropdown');
+        const distroSelectorBtnText = document.getElementById('distroSelectorBtnText');
+        const warningTitle = document.getElementById('warningTitle');
+        const warningInstructions = document.getElementById('warningInstructions');
+        const libsCodeBlock = document.getElementById('libsCodeBlock');
+        
+        const distroCommands = {
+            "Debian/Ubuntu (APT)": "sudo apt update && sudo apt install -y libvulkan1 libvulkan1:i386 mesa-vulkan-drivers mesa-vulkan-drivers:i386 libsdl2-2.0-0 libopenal1 pipewire-pulse",
+            "Red Hat/Fedora (RPM)": "sudo dnf install -y vulkan-loader vulkan-loader.i686 mesa-vulkan-drivers SDL2 openal-soft pipewire-pulseaudio",
+            "Arch Linux (Pacman)": "sudo pacman -S --noconfirm vulkan-icd-loader lib32-vulkan-icd-loader sdl2 openal pipewire-pulse",
+            "OpenSUSE (Zypper)": "sudo zypper install -n libvulkan1 libvulkan1-32bit Mesa-vulkan-drivers libSDL2-2_0-0 openal-soft pipewire-pulseaudio",
+            "Gentoo (Portage)": "emerge --ask dev-libs/vulkan-loader media-libs/libsdl2 media-libs/openal media-sound/pipewire",
+            "NixOS (Nix)": "nix-shell -p vulkan-tools vulkan-loader SDL2 openalSupport pipewire",
+            "Void Linux (XBPS)": "sudo xbps-install -S -y vulkan-loader mesa-vulkan-drivers SDL2 openal-soft pipewire-pulse",
+            "Solus (eopkg)": "sudo eopkg install -y vulkan libsdl2 openal-soft pipewire"
+        };
+        
+        if (distroSelectorBtn) {
+            distroSelectorBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const isAlreadyOpen = distroDropdown.classList.contains('show');
+                if (!isAlreadyOpen) {
+                    const buttonRect = distroSelectorBtn.getBoundingClientRect();
+                    const spaceBelow = window.innerHeight - buttonRect.bottom;
+                    const dropdownHeight = 280; 
+
+                    if (spaceBelow < (dropdownHeight + 10)) {
+                        distroDropdown.classList.add('drop-up');
+                    } else {
+                        distroDropdown.classList.remove('drop-up');
+                    }
+                }
+                distroDropdown.classList.toggle('show');
+                distroSelectorBtn.classList.toggle('open');
+            });
+
+            distroDropdown.addEventListener('click', (event) => {
+                const target = event.target.closest('.distro-item');
+                if (target && target.dataset.distro) {
+                    event.preventDefault();
+                    const distroName = target.dataset.distro;
+                    
+                    distroSelectorBtnText.textContent = distroName;
+                    warningTitle.textContent = `Librerías para ${distroName}`;
+                    warningInstructions.textContent = `Instala las dependencias necesarias con el siguiente comando:`;
+                    
+                    libsCodeBlock.textContent = distroCommands[distroName] || "Comando no disponible para esta selección.";
+                    
+                    distroDropdown.classList.remove('show');
+                    distroSelectorBtn.classList.remove('open');
+                }
+            });
+
+            window.addEventListener('click', () => {
+                if (distroDropdown.classList.contains('show')) {
+                    distroDropdown.classList.remove('show');
+                    distroSelectorBtn.classList.remove('open');
+                }
+            });
+        }
+        
+        // --- LÓGICA DEL SELECTOR DE uGET + ARIA2 ---
+        const ugetSelectorBtn = document.getElementById('ugetSelectorBtn');
+        const ugetDropdown = document.getElementById('ugetDropdown');
+        const ugetSelectorBtnText = document.getElementById('ugetSelectorBtnText');
+        const ugetWarningTitle = document.getElementById('ugetWarningTitle');
+        const ugetWarningInstructions = document.getElementById('ugetWarningInstructions');
+        const ugetCodeBlock = document.getElementById('ugetCodeBlock');
+
+        const ugetCommands = {
+            "Debian/Ubuntu (APT)": "sudo apt update && sudo apt install -y uget aria2",
+            "Red Hat/Fedora (RPM)": "sudo dnf install -y uget aria2",
+            "Arch Linux (Pacman)": "sudo pacman -S --noconfirm uget aria2",
+            "OpenSUSE (Zypper)": "sudo zypper install -n uget aria2",
+            "Gentoo (Portage)": "sudo emerge --ask app-misc/uget net-misc/aria2",
+            "NixOS (Nix)": "nix-env -iA nixos.uget nixos.aria2",
+            "Void Linux (XBPS)": "sudo xbps-install -S -y uget aria2",
+            "Solus (eopkg)": "sudo eopkg install -y uget aria2"
+        };
+        
+        if (ugetSelectorBtn) {
+            ugetSelectorBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const isAlreadyOpen = ugetDropdown.classList.contains('show');
+                if (!isAlreadyOpen) {
+                    const buttonRect = ugetSelectorBtn.getBoundingClientRect();
+                    const spaceBelow = window.innerHeight - buttonRect.bottom;
+                    const dropdownHeight = 280; 
+
+                    if (spaceBelow < (dropdownHeight + 10)) {
+                        ugetDropdown.classList.add('drop-up');
+                    } else {
+                        ugetDropdown.classList.remove('drop-up');
+                    }
+                }
+                ugetDropdown.classList.toggle('show');
+                ugetSelectorBtn.classList.toggle('open');
+            });
+
+            ugetDropdown.addEventListener('click', (event) => {
+                const target = event.target.closest('.distro-item');
+                if (target && target.dataset.distro) {
+                    event.preventDefault();
+                    const distroName = target.dataset.distro;
+                    
+                    ugetSelectorBtnText.textContent = distroName;
+                    ugetWarningTitle.textContent = `Comandos de uGet para ${distroName}`;
+                    ugetWarningInstructions.textContent = `Para instalar uGet y Aria2, usa el siguiente comando:`;
+                    ugetCodeBlock.textContent = ugetCommands[distroName] || "Comando no disponible para esta selección.";
+                    
+                    ugetDropdown.classList.remove('show');
+                    ugetSelectorBtn.classList.remove('open');
+                }
+            });
+
+            window.addEventListener('click', () => {
+                if (ugetDropdown.classList.contains('show')) {
+                    ugetDropdown.classList.remove('show');
+                    ugetSelectorBtn.classList.remove('open');
+                }
+            });
+        }
+    });
+
+    document.getElementById('backToHomeBtn').addEventListener('click', function(event) {
+        event.stopPropagation();
+        event.preventDefault();
+        window.location.href = '../../index.html';
+    });
+</script>
+
+</body>
+</html>

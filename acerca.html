@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Acerca de - Juego Linux</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    :root {
+      --bg: #0f0f0f;
+      --text: #ffffff;
+      --card-bg: #1c1c1c;
+      --hover-bg: #292929;
+      --header-bg: #1a1a1a;
+      --accent: #08f;
+      --button-border: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Ubuntu', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: var(--header-bg);
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .logo {
+      font-size: 1.5em;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo img {
+      height: 40px;
+    }
+
+    .back-btn {
+      background: var(--card-bg);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 25px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: 1px solid var(--button-border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-btn:hover {
+      background: var(--hover-bg);
+      transform: scale(1.05);
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+      gap: 30px;
+    }
+
+    .content-card {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 15px;
+      border: 1px solid var(--button-border);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      text-align: center;
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .content-card h2 {
+      font-size: 2.2em;
+      margin-bottom: 30px;
+      color: var(--text); 
+      font-weight: bold;
+    }
+
+    .content-card p {
+      font-size: 1.1em;
+      color: var(--text);
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px 15px;
+        justify-content: flex-start;
+        padding-top: 30px;
+      }
+      .content-card {
+        padding: 25px;
+        margin-bottom: 20px;
+      }
+      .content-card h2 { font-size: 1.8em; }
+      .content-card p { font-size: 1em; }
+      .logo { font-size: 1.3em; }
+      .back-btn { padding: 8px 15px; font-size: 0.9em; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg" alt="Tux Logo">
+    Juego Linux
+  </div>
+  <a href="index.html" class="back-btn">
+    ← Volver al inicio
+  </a>
+</header>
+
+<div class="container">
+  <div class="content-card">
+    <h2>¿Cómo empezó esta web?</h2>
+    <p>Hola, soy Slowrchaxs, el creador de esta página.</p>
+    <p>Esta web fue diseñada por mí con un objetivo claro: demostrar que en Linux también se juega duro y un lugar para la facilidad de descarga de juegos.</p>
+  </div>
+
+  <div class="content-card">
+    <h2>Proyecto independiente</h2>
+    <p>Esta web es un proyecto 100% independiente, creada y mantenida por una sola persona: yo, Slowrchaxs.</p>
+    <p>No hay un equipo grande detrás, ni una empresa, ni patrocinadores. Solo hay dedicación, pasión por Linux y muchas ganas de compartir juegos que realmente funcionen en tu distro.</p>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Juego Linux</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0f0f; --text: #ffffff; --card-bg: #1c1c1c;
+      --hover-bg: #292929; --header-bg: #1a1a1a; --nav-bg: #1b1b1b;
+      --search-bg: #1f1f1f; --search-focus-bg: #ffffff; --accent: #08f;
+      --button-border: rgba(255, 255, 255, 0.1); --green: #00c853; --green-hover: #00a843;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Ubuntu', sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    .background-animation, .site-content > main {
+      transition: filter 0.5s ease-in-out; 
+    }
+
+    .background-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .logo-float {
+      position: absolute;
+      display: block;
+      opacity: 0;
+      filter: opacity(0.7);
+      animation: fade-in-animation 2s ease-out forwards, float-animation 25s linear infinite;
+    }
+    @keyframes float-animation {
+      0%{transform: translateY(100vh) rotate(0deg);}
+      100%{transform: translateY(-120vh) rotate(360deg);}
+    }
+    @keyframes fade-in-animation { to { opacity: 0.7; } }
+
+    .logo-float:nth-child(1) { top: 80%; left: 10%; width: 80px; animation-duration: 2s, 22s; animation-delay: 0s; }
+    .logo-float:nth-child(2) { top: 90%; left: 25%; width: 50px; animation-duration: 2s, 30s; animation-delay: 1s; }
+    .logo-float:nth-child(3) { top: 70%; left: 40%; width: 60px; animation-duration: 2s, 18s; animation-delay: 3s; }
+    .logo-float:nth-child(4) { top: 85%; left: 55%; width: 90px; animation-duration: 2s, 13s; animation-delay: 0.5s; }
+    .logo-float:nth-child(5) { top: 95%; left: 70%; width: 55px; animation-duration: 2s, 22s; animation-delay: 2s; }
+    .logo-float:nth-child(6) { top: 75%; left: 85%; width: 75px; animation-duration: 2s, 16s; animation-delay: 4s; }
+    .logo-float:nth-child(7) { top: 65%; left: 5%; width: 65px; animation-duration: 2s, 28s; animation-delay: 6s; }
+    .logo-float:nth-child(8) { top: 80%; left: 90%; width: 85px; animation-duration: 2s, 19s; animation-delay: 8s; }
+
+    .site-content {
+        position: relative;
+        z-index: 1;
+        background-color: transparent;
+    }
+    body.menu-opened { overflow: hidden; }
+    
+    body.menu-opened .background-animation,
+    body.menu-opened .site-content > main {
+      filter: blur(8px) brightness(0.4);
+    }
+    
+    body.menu-opened .site-content > main {
+      pointer-events: none;
+    }
+    header {
+      background: rgba(26, 26, 26, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 15px 20px; display: flex;
+      justify-content: space-between; align-items: center; position: sticky;
+      top: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 2000;
+    }
+    .logo { font-size: 1.5em; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+    .logo img { height: 40px; }
+    .menu-toggle {
+      font-size: 1.8em;
+      cursor: pointer;
+      transition: transform 0.3s ease, color 0.3s ease;
+      color: white;
+      position: relative;
+      z-index: 2500;
+      background: none;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    .menu-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.1);
+    }
+    .menu-toggle.active {
+      transform: rotate(90deg) scale(1.1);
+      color: white;
+    }
+    nav {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      height: 100vh;
+      width: 75%;
+      max-width: 270px;
+      background: var(--nav-bg);
+      display: flex;
+      flex-direction: column;
+      padding: 100px 20px 20px;
+      gap: 15px;
+      transition: right 0.4s ease;
+      box-shadow: -5px 0 15px rgba(0,0,0,0.6);
+      overflow-y: auto;
+      z-index: 1500;
+    }
+    nav.active { right: 0; }
+    nav a { background: var(--card-bg); padding: 12px 16px; border-radius: 12px; text-decoration: none; color: var(--text); font-size: 1.1em; transition: background 0.3s, transform 0.2s; border: 1px solid var(--button-border); display: flex; align-items: center; gap: 10px; }
+    nav a:hover { background: var(--hover-bg); transform: scale(1.05); }
+    .social-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--button-border); }
+    .social-title { color: var(--accent); font-size: 0.9em; font-weight: bold; margin-bottom: 15px; padding-left: 5px; }
+    .social-link { background: var(--card-bg); padding: 12px 16px; border-radius: 12px; text-decoration: none; color: var(--text); font-size: 1em; transition: all 0.3s ease; border: 1px solid var(--button-border); display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .social-link:hover { transform: scale(1.05); }
+    .social-link.instagram:hover { background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%); border-color: #e6683c; }
+    .social-link.telegram:hover { background: #0088cc; border-color: #0088cc; }
+    .social-icon { width: 20px; height: 20px; flex-shrink: 0; }
+    .hero { text-align: center; padding: 60px 20px 40px; }
+    .hero h1 { font-size: 2.5em; }
+    .hero p { font-size: 1.2em; color: #bbb; margin-top: 10px; }
+    .search-container { margin: 30px auto 0; position: relative; width: 210px; max-width: 100%; transition: width 0.4s ease; }
+    .search-container.expanded { width: 260px; }
+    .search-container input { width: 100%; padding: 12px 45px 12px 20px; border-radius: 25px; background-color: var(--search-bg); color: white; font-size: 1em; transition: all 0.3s ease; border: 2px solid transparent; }
+    .search-container input:not(:focus):hover { border-color: rgba(0, 136, 255, 0.4); }
+    .search-container input:focus { background: var(--search-focus-bg); color: black; border-color: var(--accent); box-shadow: 0 0 10px var(--accent); }
+    .search-container .icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 1.4em; color: var(--accent); pointer-events: none; }
+    .featured-game-section { padding: 0 40px 0 40px; }
+    .featured-game { background: #000; padding: 40px; border-radius: 15px; display: flex; gap: 40px; align-items: center; border: 1px solid var(--button-border); transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .featured-game:hover { transform: scale(1.02); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5); }
+    .featured-image img {
+      width: 400px;
+      height: 240px;
+      object-fit: cover;
+      border-radius: 10px;
+      flex-shrink: 0;
+      transition: transform 0.4s ease, filter 0.4s ease;
+      filter: grayscale(30%) contrast(110%);
+    }
+    .featured-game:hover .featured-image img {
+      transform: scale(1.05);
+      filter: grayscale(0%) contrast(100%);
+    }
+    .featured-details h2 { font-size: 1.2em; color: var(--accent); margin-bottom: 10px; font-weight: bold; letter-spacing: 1px; }
+    .featured-details h3 { font-size: 2.2em; margin-bottom: 15px; }
+    .featured-details p { color: #bbb; margin-bottom: 25px; line-height: 1.7; }
+    
+    .category-section { 
+        padding: 0 40px;
+        margin-top: 80px;
+    }
+    main > .category-section:first-of-type {
+        margin-top: 50px;
+    }
+    .category-title { 
+        font-size: 1.8em; 
+        padding-bottom: 10px; 
+        border-bottom: 1px solid var(--button-border); 
+        margin-bottom: 40px;
+    }
+    
+    .category-content-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .game-rows-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        flex-grow: 1;
+    }
+    
+    .game-row { 
+        display: grid; 
+        grid-auto-flow: column; 
+        grid-auto-columns: 290px;
+        gap: 20px; 
+        overflow-x: auto; 
+        padding-top: 10px;
+        padding-bottom: 20px;
+        scrollbar-width: thin; 
+        scrollbar-color: var(--accent) var(--card-bg); 
+    }
+    .game-row::-webkit-scrollbar { height: 8px; }
+    .game-row::-webkit-scrollbar-track { background: var(--card-bg); border-radius: 4px; }
+    .game-row::-webkit-scrollbar-thumb { background-color: var(--accent); border-radius: 4px; }
+    
+    .game { 
+      background: var(--card-bg); 
+      padding: 15px; 
+      border-radius: 10px; 
+      text-align: center; 
+      transition: transform 0.3s ease, background 0.3s ease; 
+      border: 1px solid var(--button-border); 
+      width: 290px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .game:hover { 
+      transform: translateY(-5px); 
+      background: var(--hover-bg); 
+    }
+    .game img { 
+      width: 100%; 
+      height: 150px;
+      object-fit: cover;
+      border-radius: 5px; 
+    }
+    .game h3 { 
+      margin: 15px 0 10px 0;
+      font-size: 1.1em;
+    }
+    .game p {
+      font-size: 0.9em;
+      color: #bbb;
+      line-height: 1.4;
+      margin: 0 5px 15px 5px;
+      flex-grow: 1; 
+    }
+    .btn { 
+      display: inline-block; 
+      background: var(--green); 
+      color: #fff; 
+      padding: 10px 20px; 
+      border-radius: 8px; 
+      text-decoration: none; 
+      transition: all 0.3s ease; 
+      margin-top: auto;
+    }
+    .btn:hover { 
+      background: var(--green-hover); 
+      transform: scale(1.05); 
+      box-shadow: 0 0 10px var(--green-hover); 
+    }
+
+    /* === INICIO: CÓDIGO CSS PARA EL BOTÓN DE 32-BITS === */
+    .btn-32bit {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.85em;
+      padding: 8px 15px;
+      margin-top: 10px;
+    }
+    .btn-32bit:hover {
+      background: var(--accent);
+      color: var(--text);
+      box-shadow: 0 0 8px var(--accent);
+    }
+    /* === FIN: CÓDIGO CSS PARA EL BOTÓN DE 32-BITS === */
+    
+    .view-all-link {
+        width: 65px;
+        height: 65px;
+        background-color: var(--card-bg);
+        border: 1px solid var(--button-border);
+        border-radius: 50%;
+        color: #aaa;
+        text-decoration: none;
+        flex-shrink: 0;
+        transition: all 0.3s ease-in-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    .view-all-link svg {
+        width: 32px;
+        height: 32px;
+        transition: transform 0.3s ease;
+    }
+
+    .view-all-link:hover {
+        background-color: #fff;
+        border-color: #fff;
+        transform: scale(1.1);
+        box-shadow: 0 5px 20px rgba(255, 255, 255, 0.25);
+        color: #0f0f0f;
+    }
+    .view-all-link:hover svg {
+        transform: translateX(3px);
+    }
+    
+    .view-all-text {
+        font-family: 'Ubuntu', sans-serif;
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(10px);
+        margin-bottom: 8px;
+        background: var(--card-bg);
+        color: var(--text);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.85em;
+        font-weight: bold;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        pointer-events: none;
+    }
+    .view-all-link:hover .view-all-text {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .overlay { position: fixed; top: 0; left: 0; height: 100vh; width: 100vw; background: transparent; z-index: 1400; display: none; pointer-events: none; }
+    .overlay.active { display: block; pointer-events: auto; }
+    
+    .scroll-to-top { 
+      display: none !important; 
+    }
+    
+    @media (max-width: 900px) {
+      .featured-game-section { padding-left: 20px; padding-right: 20px; }
+      .featured-game { flex-direction: column; padding: 25px; }
+      .featured-image img { width: 100%; height: auto; }
+
+      .category-section { 
+        padding-left: 20px; 
+        padding-right: 20px; 
+        margin-top: 60px;
+      }
+      .category-content-wrapper {
+        gap: 15px;
+      }
+      .view-all-link {
+        width: 52px;
+        height: 52px;
+      }
+      .view-all-link svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="background-animation">
+    <img src="https://i.imgur.com/uNZjixF.png" alt="Zorin OS Logo" class="logo-float">
+    <img src="https://i.imgur.com/BOmNzCz.png" alt="Ubuntu Logo" class="logo-float">
+    <img src="https://i.imgur.com/r5FwRvw.png" alt="Arch Linux Logo" class="logo-float">
+    <img src="https://i.imgur.com/KWbWAcY.png" alt="Fedora Logo" class="logo-float">
+    <img src="https://i.imgur.com/eQgWVjy.png" alt="Linux Mint Logo" class="logo-float">
+    <img src="https://i.imgur.com/ao5HI4i.png" alt="Gentoo Logo" class="logo-float">
+    <img src="https://i.imgur.com/5oKibO8.png" alt="Debian Logo" class="logo-float">
+    <img src="https://i.imgur.com/NwT9EPu.png" alt="Tux" class="logo-float">
+</div>
+
+<header>
+    <div class="logo">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/3/35/Tux.svg" alt="Tux Logo">
+        Juego Linux
+    </div>
+    <button class="menu-toggle" id="menuToggle">☰</button>
+</header>
+<div class="overlay" id="overlay"></div>
+<nav id="menu">
+    <a href="acerca.html">ℹ️ Acerca de mi</a>
+    <div class="social-section">
+        <div class="social-title">📱 Contacto</div>
+        <a href="https://www.instagram.com/slowcharxss?igsh=MTdtbm51bWNlbjRmNA==" target="_blank" class="social-link instagram"><svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            Instagram
+          </a>
+          <a href="https://t.me/Slowrchaxss" target="_blank" class="social-link telegram"><svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+            Telegram
+          </a>
+        </div>
+    </nav>
+
+<div class="site-content">
+    <main>
+        <section class="hero" id="inicio">
+            <h1>🔥 LOS MEJORES JUEGOS PARA LINUX 🐧</h1>
+            <p>Explora títulos optimizados para tu distro favorita. ¡Disfruta sin límites!</p>
+            <div class="search-container" id="searchContainer">
+                <input type="text" placeholder="Buscar juegos..." id="searchInput">
+                <span class="icon">🔍</span>
+            </div>
+        </section>
+        <section class="featured-game-section">
+            <div class="featured-game">
+                <div class="featured-image">
+                    <img src="https://i.imgur.com/pz68LEi.jpeg" alt="ULTRAKILL">
+                </div>
+                <div class="featured-details">
+                    <h2>JUEGO DESTACADO</h2>
+                    <h3>ULTRAKILL</h3>
+                    <p>Un shooter retro en primera persona de ritmo rápido donde la sangre es combustible. Enfréntate a demonios y máquinas infernales en este frenético juego lleno de acción brutal y mecánicas innovadoras.</p>
+                    <a href="juego destacado/ULTRAKILL/ULTRAKILL.html" class="btn">Ver Más y Descargar</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="category-section">
+            <h2 class="category-title">Acción y Aventura</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/RS21ReF.jpeg" alt="Brotato"><h3>Brotato</h3><p>Una papa armada hasta los dientes en una tormenta de enemigos,mezcla acción brutal con partidas cortas y un gameplay adictivo.</p><a href="accion y aventura/BROTATO/BROTATO.HTML" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/fw5hNHY.jpeg" alt="Terraria"><h3>Terraria</h3><p>Cava, lucha, explora y construye en este mundo de aventuras 2D.</p><a href="accion y aventura/TERRARIA/TERRARIA.HTML" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/QAl64tr.jpeg" alt="Blasphemous"><h3>Blasphemous</h3><p>Explora Cvstodia en este metroidvania oscuro y desafiante.</p><a href="accion y aventura/blasphemous/blasphemous.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/5O0L1hA.jpeg" alt="Valheim"><h3>Valheim</h3><p>Un brutal juego de supervivencia inspirado en la cultura vikinga.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/GZ5v41s.jpeg" alt="Terraria"><h3>Terraria</h3><p>Cava, lucha, explora y construye en este mundo de aventuras 2D.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/Y1j9JvE.jpg" alt="Hades"><h3>Hades</h3><p>Desafía al dios de los muertos en este galardonado roguelike de mazmorras.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/KqW4aL0.jpg" alt="Risk of Rain 2"><h3>Risk of Rain 2</h3><p>Escapa de un caótico planeta alienígena luchando solo o con amigos.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/kG7Gsd1.jpg" alt="Tomb Raider"><h3>Tomb Raider (2013)</h3><p>Descubre los orígenes de Lara Croft en su primera y trepidante aventura.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/Bf0P0b8.jpg" alt="Psychonauts 2"><h3>Psychonauts 2</h3><p>Una aventura psicodélica sobre misiones mentales y conspiraciones.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+
+        <section class="category-section">
+            <h2 class="category-title">Shooters</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/4FoosgZ.png" alt="Postal 2"><h3>Postal 2</h3><p>Un juego en primera persona tan caótico como irreverente: explora, causa desastres o solo recoge leche... todo depende de cuán loco quieras ser.</p><a href="shooters/POSTAL 2/postal2.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/8aGKOZr.jpeg" alt="Miami Hotline"><h3>Miami Hotline</h3><p>retro de vista cenital con acción ultra rápida, violencia pixelada y una historia psicodélica ambientada en los 80’s.</p><a href="shooters/miami hotline/miami hotline.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/A6p2d1s.jpg" alt="Counter-Strike 2"><h3>Counter-Strike 2</h3><p>El shooter táctico por equipos definitivo. Precisión y estrategia son clave.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/z4g1s7o.jpg" alt="DOOM (2016)"><h3>DOOM (2016)</h3><p>Aniquila hordas de demonios en Marte con un arsenal brutal y movimiento frenético.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/5J3c1rY.jpg" alt="Left 4 Dead 2"><h3>Left 4 Dead 2</h3><p>Sobrevive al apocalipsis zombi con tus amigos en este icónico shooter cooperativo.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/3RAa0Or.jpeg" alt="Counter-Strike: source"><h3>Counter-Strike: source</h3><p>Versión nativa para Linux del clásico shooter de Valve.Counter-Terrorists vs Terrorists en intensas partidas tácticas.</p><a href="shooters/couter strike source/counter strike source.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/5J3c1rY.jpg" alt="ingresa un juego"><h3>ingresa un juego</h3><p>Una versión retorcida de la ruleta rusa con una escopeta. Tenso y adictivo.</p><a href="supervivencia y horror/BUCKSHOOT ROULETTEE/BUCKSHOT ROULETTE.HTML" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/A6p2d1s.jpg" alt="Counter-Strike 2"><h3>Counter-Strike 2</h3><p>El shooter táctico por equipos definitivo. Precisión y estrategia son clave.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/z4g1s7o.jpg" alt="DOOM (2016)"><h3>DOOM (2016)</h3><p>Aniquila hordas de demonios en Marte con un arsenal brutal y movimiento frenético.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/5J3c1rY.jpg" alt="Left 4 Dead 2"><h3>Left 4 Dead 2</h3><p>Sobrevive al apocalipsis zombi con tus amigos en este icónico shooter cooperativo.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+        <section class="category-section">
+            <h2 class="category-title">Sandbox</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game">
+                            <img src="https://i.imgur.com/dvNusaq.jpeg" alt="Garrys Mod">
+                            <h3>Garrys Mod</h3>
+                            <p>Un sandbox con físicas donde puedes crear, modificar y destruir lo que quieras. Experimenta con mods, armas locas y escenarios absurdos sin límites.</p>
+                            <a href="sandbox/GARRYS MOD/GARRYS MOD 64 BITS/GARRYS MOD.HTML" class="btn">Descargar (64-bit)</a>
+                            <a href="sandbox/GARRYS MOD/GARRYS MOD 32 BITS/GARRYS MOD 32 BITS.html" class="btn btn-32bit">Opción para 32-bits</a>
+                        </div>
+                        <div class="game"><img src="https://i.imgur.com/5O0L1hA.jpeg" alt="Terraria"><h3>coloca algo aca</h3><p>Cava, lucha, explora y construye en este mundo de aventuras 2D.</p><a href="" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/LkKxfKo.jpeg" alt="Hollow Knight"><h3>Hollow Knight</h3><p>Aventúrate en un vasto reino de insectos y héroes en este metroidvania.</p><a href="juegos/hollow-knight.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/5O0L1hA.jpeg" alt="Valheim"><h3>Valheim</h3><p>Un brutal juego de supervivencia inspirado en la cultura vikinga.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/GZ5v41s.jpeg" alt="Terraria"><h3>Terraria</h3><p>Cava, lucha, explora y construye en este mundo de aventuras 2D.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/Y1j9JvE.jpg" alt="Hades"><h3>Hades</h3><p>Desafía al dios de los muertos en este galardonado roguelike de mazmorras.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/KqW4aL0.jpg" alt="Risk of Rain 2"><h3>Risk of Rain 2</h3><p>Escapa de un caótico planeta alienígena luchando solo o con amigos.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/kG7Gsd1.jpg" alt="Tomb Raider"><h3>Tomb Raider (2013)</h3><p>Descubre los orígenes de Lara Croft en su primera y trepidante aventura.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/Bf0P0b8.jpg" alt="Psychonauts 2"><h3>Psychonauts 2</h3><p>Una aventura psicodélica sobre misiones mentales y conspiraciones.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+
+        <section class="category-section">
+            <h2 class="category-title">Puzles y Estrategia</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/qwEwBgZ.jpeg" alt="Celeste"><h3>Celeste</h3><p>Ayuda a Madeline a sobrevivir en la montaña Celeste en este plataformero.</p><a href="juegos/celeste.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/sY75Wv8.jpeg" alt="Stardew Valley"><h3>Stardew Valley</h3><p>Crea la granja de tus sueños en este simulador de vida y agricultura.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/pXBp1tG.jpeg" alt="Among Us"><h3>Among Us</h3><p>Trabaja en equipo y encuentra al impostor en este juego de deducción.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/aCZy5N5.jpg" alt="Slay the Spire"><h3>Slay the Spire</h3><p>Una fusión de cartas y roguelike. Construye tu mazo y vence.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/y3yS1nF.jpg" alt="Portal 2"><h3>Portal 2</h3><p>Resuelve puzles con portales en esta aclamada aventura de ciencia ficción.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/mU4AU1s.jpg" alt="Into the Breach"><h3>Into the Breach</h3><p>Defiende a la humanidad de monstruos gigantes en este juego de estrategia.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/vH1Z2cT.jpg" alt="Civilization VI"><h3>Civilization VI</h3><p>Construye un imperio que resista el paso del tiempo. Gobierna el mundo.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/3q1yQ4Y.jpg" alt="Baba Is You"><h3>Baba Is You</h3><p>Un juego de puzles donde las reglas las cambias tú mismo.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+        
+        <section class="category-section">
+            <h2 class="category-title">Supervivencia y Horror</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/rMUbLP0.jpeg" alt="Proyect Zomboid"><h3>Proyect Zomboid</h3><p>¿Cómo vas a morir? Project Zomboid te lanza al apocalipsis zombie más realista, donde cada decisión puede ser la última.</p><a href="supervivencia y horror/proyect zomboid/proyect zomboid.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/eXfP3kg.jpeg" alt="Buckshot Roulette"><h3>Buckshot Roulette</h3><p>Buckshot Roulette es una versión retorcida de la ruleta rusa,Enfréntate cara a cara con oponentes sin alma</p><a href="supervivencia y horror/BUCKSHOOT ROULETTEE/BUCKSHOT ROULETTE.HTML" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/oEtL6dM.jpg" alt="ingresa un juego"><h3>ingresa un juego</h3><p>Lucha por sobrevivir al apocalipsis.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/7bYc4aD.jpg" alt="7 Days to Die"><h3>7 Days to Die</h3><p>Un sandbox único que mezcla FPS, supervivencia y defensa de torres.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/3sX8vR5.jpg" alt="Don't Starve Together"><h3>Don't Starve Together</h3><p>Sobrevive en un mundo extraño y explora sus secretos con amigos.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/E8wG2dC.jpg" alt="Rust"><h3>Rust</h3><p>El único objetivo en Rust es sobrevivir. Supera el hambre y a otros jugadores.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/7Z4iA1r.jpg" alt="ARK: Survival Evolved"><h3>ARK: Survival Evolved</h3><p>Domestica dinosaurios y sobrevive en una isla misteriosa.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/S5aL5kE.jpg" alt="Subnautica"><h3>Subnautica</h3><p>Desciende a las profundidades de un mundo submarino alienígena.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/pL2e5gH.jpg" alt="Layers of Fear"><h3>Layers of Fear</h3><p>Sumérgete en la mente de un pintor loco y descubre el secreto de su locura.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+
+        <section class="category-section">
+            <h2 class="category-title">Simulación</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1tl1O8Z.jpeg" alt="Stardew Valley"><h3>Stardew Valley</h3><p>Escapa de la ciudad y revive una granja. Cultiva, pesca, explora cuevas y conquista corazones en este simulador de vida rural pixelado.</p><a href="simulacion/Stardew Valley/Stardew Valley.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/hG9dZ4x.jpg" alt="Cities: Skylines"><h3>Cities: Skylines</h3><p>Diseña, construye y gestiona la ciudad de tus sueños.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/8fW8oQn.jpg" alt="Euro Truck Simulator 2"><h3>Euro Truck Simulator 2</h3><p>Conduce camiones legendarios por toda Europa.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/z0AnL4B.jpg" alt="Kerbal Space Program"><h3>Kerbal Space Program</h3><p>Dirige un programa espacial y construye naves para explorar el cosmos.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/B9B2oYq.jpg" alt="Factorio"><h3>Factorio</h3><p>Construye y automatiza fábricas para crear productos complejos.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/c1o4tJg.jpg" alt="RimWorld"><h3>RimWorld</h3><p>Una colonia de simulación de ciencia ficción impulsada por una IA.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/c1o4tJg.jpg" alt="RimWorld"><h3>RimWorld</h3><p>Una colonia de simulación de ciencia ficción impulsada por una IA.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/r6T0r3X.jpg" alt="Stellaris"><h3>Stellaris</h3><p>Explora una galaxia llena de maravillas en este juego de gran estrategia.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/mS9x8P0.jpg" alt="American Truck Simulator"><h3>American Truck Sim</h3><p>Experimenta legendarios camiones americanos y entrega tu carga.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/fL3s3nN.jpg" alt="Farming Simulator 22"><h3>Farming Simulator 22</h3><p>Conviértete en un agricultor moderno y crea tu granja.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+
+        <section class="category-section">
+            <h2 class="category-title">Pixel y Retro</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/Z3tBwBv.jpg" alt="Undertale"><h3>Undertale</h3><p>Un RPG donde nadie tiene por qué salir herido. Lleno de humor y alma.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/e5k0q0I.jpg" alt="Blasphemous"><h3>Blasphemous</h3><p>Explora un mundo de pesadilla en este metroidvania de acción brutal.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/d9j8o3p.jpg" alt="Katana ZERO"><h3>Katana ZERO</h3><p>Un elegante juego de plataformas y acción neo-noir de alta velocidad.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/7bYc4aD.jpg" alt="Hotline Miami"><h3>Hotline Miami</h3><p>Desafía tu sed de sangre en este juego de acción de estética ochentera.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/oD4fH2k.jpg" alt="Hyper Light Drifter"><h3>Hyper Light Drifter</h3><p>Un RPG de acción y aventura con un estilo que evoca los 16 bits.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/T0b4e0v.jpg" alt="CrossCode"><h3>CrossCode</h3><p>Un RPG de acción 2D de estilo retro con una historia de ciencia ficción.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/xV6d7Bq.jpg" alt="Cyber Shadow"><h3>Cyber Shadow</h3><p>Salta a través de las ruinas de Mekacity en este juego de acción ninja.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+        
+        <section class="category-section">
+            <h2 class="category-title">Terror</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/dC5fG6X.jpg" alt="Amnesia: The Dark Descent"><h3>Amnesia: The Dark Descent</h3><p>Una pesadilla en primera persona. La supervivencia es tu único objetivo.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/wP0H9oB.jpg" alt="SOMA"><h3>SOMA</h3><p>Terror y ciencia ficción en las profundidades del océano Atlántico.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/cK7L8mN.jpg" alt="Outlast"><h3>Outlast</h3><p>Investiga un manicomio abandonado. Huir es tu única esperanza.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/W2S2M4h.jpg" alt="Alien: Isolation"><h3>Alien: Isolation</h3><p>Siente el verdadero miedo en un survival horror en primera persona.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/Y3h2o5D.jpg" alt="Phasmophobia"><h3>Phasmophobia</h3><p>Terror psicológico cooperativo para 4 jugadores. Caza fantasmas.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/1nQ1Z2f.jpg" alt="Resident Evil 2"><h3>Resident Evil 2</h3><p>El remake de una obra maestra del survival horror. Intensidad clásica.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/7w3k4lI.jpg" alt="Little Nightmares"><h3>Little Nightmares</h3><p>Enfréntate a los miedos de tu infancia en esta oscura y extravagante historia.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/pL2e5gH.jpg" alt="Layers of Fear"><h3>Layers of Fear</h3><p>Sumérgete en la mente de un pintor loco y descubre el secreto de su locura.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+
+        <section class="category-section">
+            <h2 class="category-title">carreras</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/k2g7W5E.jpg" alt="Assetto Corsa"><h3>Assetto Corsa</h3><p>Simulador de carreras de nueva generación que reproduce circuitos reales.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/eR9tF3o.jpg" alt="Dirt Rally 2.0"><h3>Dirt Rally 2.0</h3><p>Pilota por ubicaciones de rally icónicas de todo el mundo.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/3rQ2x7a.jpg" alt="F1 23"><h3>F1 23</h3><p>Ponte al volante en el videojuego oficial del Campeonato de F1.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/N7f4v9k.jpg" alt="GRID Autosport"><h3>GRID Autosport</h3><p>Vive la emoción de las carreras profesionales en este gran título.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/m3x5k6J.jpg" alt="Wreckfest"><h3>Wreckfest</h3><p>¡Carreras sin reglas con una simulación de físicas de nueva generación!</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/f9G4h2d.jpg" alt="Project CARS 2"><h3>Project CARS 2</h3><p>La experiencia de carreras definitiva. Creado por jugadores para jugadores.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/r9S6o7Y.jpg" alt="Automobilista 2"><h3>Automobilista 2</h3><p>El simulador más completo del automovilismo brasileño.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/n8O7p6E.jpg" alt="MotoGP 22"><h3>MotoGP 22</h3><p>Vive toda la emoción del campeonato de MotoGP con la temporada 2022.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+
+                <section class="category-section">
+            <h2 class="category-title">plataformas e indie</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/N567ebo.jpeg" alt="Undertale"><h3>Undertale</h3><p>Una entrañable aventura de rol con combates únicos y decisiones clave.</p><a href="plataformas e indie/UNDERTALE/UNDERTALE.HTML" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/D4Cc6r9.jpeg" alt="hollow knight"><h3>Hollow Knight</h3><p>Metroidvania desafiante en un mundo subterráneo dibujado a mano, lleno de enemigos letales, secretos profundos y una ambientación inolvidable</p><a href="plataformas e indie/HOLLOW NIGHT/hollow night.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/iEgfHZe.jpeg" alt="Dirt Rally 2.0"><h3>Dirt Rally 2.0</h3><p>Corre, salta y destruye todo a tu paso en este frenético juego de plataformas 2D inspirado en Wario Land.</p><a href="plataformas e indie/pizza tower/pizza tower.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/3rQ2x7a.jpg" alt="F1 23"><h3>F1 23</h3><p>Ponte al volante en el videojuego oficial del Campeonato de F1.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/N7f4v9k.jpg" alt="GRID Autosport"><h3>GRID Autosport</h3><p>Vive la emoción de las carreras profesionales en este gran título.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/m3x5k6J.jpg" alt="Wreckfest"><h3>Wreckfest</h3><p>¡Carreras sin reglas con una simulación de físicas de nueva generación!</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/f9G4h2d.jpg" alt="Project CARS 2"><h3>Project CARS 2</h3><p>La experiencia de carreras definitiva. Creado por jugadores para jugadores.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/r9S6o7Y.jpg" alt="Automobilista 2"><h3>Automobilista 2</h3><p>El simulador más completo del automovilismo brasileño.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/n8O7p6E.jpg" alt="MotoGP 22"><h3>MotoGP 22</h3><p>Vive toda la emoción del campeonato de MotoGP con la temporada 2022.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+        
+        <section class="category-section">
+            <h2 class="category-title">Música</h2>
+            <div class="category-content-wrapper">
+                <div class="game-rows-container">
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/r42FMZH.png" alt="Friday Night Funking"><h3>Friday Night Funking </h3><p>Un frenético juego de ritmo y batallas musicales con estética retro y carisma desbordante.</p><a href="musica/FRIDAY NIGHT FUNKIN/FRIDAY NIGHT FUNKING.html" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/aP5rD7S.jpg" alt="Hi-Fi Rush"><h3>Hi-Fi Rush</h3><p>Siente el ritmo y desata combos devastadores en este juego de acción.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/lO8mJ3G.jpg" alt="Sayonara Wild Hearts"><h3>Sayonara Wild Hearts</h3><p>Un álbum pop convertido en videojuego. Una experiencia arcade onírica.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/jW4Z0Yp.jpg" alt="Audiosurf 2"><h3>Audiosurf 2</h3><p>Conduce al ritmo de tu propia música en este intenso juego.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                    <div class="game-row">
+                        <div class="game"><img src="https://i.imgur.com/1sPiH1k.jpg" alt="Shovel Knight"><h3>Shovel Knight</h3><p>Una arrolladora aventura de acción clásica con un gameplay genial.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/Q2h8t5B.jpg" alt="Beat Saber"><h3>Beat Saber</h3><p>Un juego de ritmo VR donde cortas bloques al son de la música.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/w4J7s9N.jpg" alt="Thumper"><h3>Thumper</h3><p>Violencia rítmica: un escarabajo espacial y enfrentamientos brutales.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/D6t8f9P.jpg" alt="Muse Dash"><h3>Muse Dash</h3><p>Un colorido juego de música que combina parkour y acción.</p><a href="#" class="btn">Descargar</a></div>
+                        <div class="game"><img src="https://i.imgur.com/F5g7h8R.jpg" alt="DJMAX RESPECT V"><h3>DJMAX RESPECT V</h3><p>Experimenta el renacer de la legendaria saga de juegos de ritmo.</p><a href="#" class="btn">Descargar</a></div>
+                    </div>
+                </div>
+                <a href="#" class="view-all-link" aria-label="Ver todos en esta categoría">
+                    <span class="view-all-text">Ver más</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </a>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+    const menuToggle = document.getElementById("menuToggle");
+    const menu = document.getElementById("menu");
+    const overlay = document.getElementById("overlay");
+    const body = document.body;
+    const searchContainer = document.getElementById("searchContainer");
+    const searchInput = document.getElementById("searchInput");
+
+    function closeMenu() {
+        body.classList.remove("menu-opened");
+        menu.classList.remove("active");
+        overlay.classList.remove("active");
+        menuToggle.classList.remove("active");
+    }
+
+    function toggleMenu() {
+        const isOpen = body.classList.contains("menu-opened");
+        
+        if (isOpen) {
+            closeMenu();
+        } else {
+            body.classList.add("menu-opened");
+            menu.classList.add("active");
+            overlay.classList.add("active");
+            menuToggle.classList.add("active");
+        }
+    }
+
+    menuToggle.addEventListener("click", (event) => {
+        event.stopPropagation();
+        toggleMenu();
+    });
+
+    overlay.addEventListener("click", closeMenu);
+
+    document.querySelectorAll('nav a:not(.social-link)').forEach(link => {
+        link.addEventListener('click', () => { closeMenu(); });
+    });
+
+    searchInput.addEventListener("focus", () => { searchContainer.classList.add("expanded"); });
+    searchInput.addEventListener("blur", () => { searchContainer.classList.remove("expanded"); });
+
+    window.addEventListener('resize', () => { 
+        if (body.classList.contains('menu-opened')) { 
+            closeMenu(); 
+        } 
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && body.classList.contains('menu-opened')) {
+            closeMenu();
+        }
+    });
+</script>
+
+</body>
+</html>
